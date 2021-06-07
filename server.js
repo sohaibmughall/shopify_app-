@@ -6,6 +6,7 @@ const { default: createShopifyAuth } = require("@shopify/koa-shopify-auth");
 const { verifyRequest } = require("@shopify/koa-shopify-auth");
 const { default: Shopify, ApiVersion } = require("@shopify/shopify-api");
 const Router = require("koa-router");
+const axios = require("axios")
 const {
   receiveWebhook,
   registerWebhook,
@@ -40,7 +41,7 @@ app.prepare().then(() => {
   server.use(
     createShopifyAuth({
       async afterAuth(ctx) {
-        const { shop, scope, accessToken  } = ctx.state.shopify;
+        const { shop, scope, accessToken } = ctx.state.shopify;
         ACTIVE_SHOPIFY_SHOPS[shop] = scope;
         ctx.redirect(`/?shop=${shop}`);
         // ctx.cookies.set("shopOrigin", shop, {
@@ -48,7 +49,7 @@ app.prepare().then(() => {
         //   secure: true,
         //   sameSite: "none",
         // });
-        
+
         // const registration = await registerWebhook({
         //   address: `${process.env.SHOPIFY_API_SECRET}/webhooks/products/create`,
         //   topic: 'PRODUCTS_CREATE',
@@ -56,7 +57,7 @@ app.prepare().then(() => {
         //   shop,
         //   apiVersion: ApiVersion.October20
         // });
-  
+
         const registration = await registerWebhook({
           address: `${process.env.HOST}/webhooks/orders/create`,
           topic: 'ORDERS_CREATE',
@@ -64,7 +65,7 @@ app.prepare().then(() => {
           shop,
           apiVersion: ApiVersion.October20
         });
-  
+
         if (registration.success) {
           console.log("Successfully registered webhook!");
         } else {
@@ -73,21 +74,21 @@ app.prepare().then(() => {
       },
 
 
-      
-        // const registration = await registerWebhook({
-        //   address: `${process.env.SHOPIFY_APP_URL}/webhooks/orders/create`,
-        //   topic: "order/create",
-        //   accessToken,
-        //   shop,
-        //   apiVersion: ApiVersion.October20,
-        // });
 
-        // if (registration.success) {
-        //   console.log("Successfully registered webhook!");
-        // } else {
-        //   console.log("Failed to register webhook", registration.result);
-        // }
-        
+      // const registration = await registerWebhook({
+      //   address: `${process.env.SHOPIFY_APP_URL}/webhooks/orders/create`,
+      //   topic: "order/create",
+      //   accessToken,
+      //   shop,
+      //   apiVersion: ApiVersion.October20,
+      // });
+
+      // if (registration.success) {
+      //   console.log("Successfully registered webhook!");
+      // } else {
+      //   console.log("Failed to register webhook", registration.result);
+      // }
+
       // },
     })
   );
@@ -95,6 +96,16 @@ app.prepare().then(() => {
 
   router.post("/webhooks/orders/create", webhook, (ctx) => {
     console.log("received webhook: ", ctx.state.webhook);
+    axios.post('http://portaladmin.edropship.co.uk/api/set/order/test', {
+      store_name: ctx.state.webhook.domain, playload: JSON.stringify(ctx.state.webhook.payload)
+    })
+      .then(function (response) {
+        console.log(response, "sucsses");
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+
   });
 
   // router.post('/webhooks', async (ctx) => {
